@@ -4,9 +4,6 @@ import SwiftUI
 import UsageCore
 
 /// 메뉴바 아이템과 팝오버.
-///
-/// 메뉴바 텍스트는 초를 표시하지 않는다. 1초마다 상태 아이템을 다시 그리는 비용이
-/// 표시 가치보다 크다.
 @MainActor
 final class StatusItemController {
     private let state: AppState
@@ -20,6 +17,14 @@ final class StatusItemController {
     init(state: AppState) {
         self.state = state
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+        // 이름을 주지 않으면 macOS가 Item-0 같은 공용 슬롯을 배정한다.
+        // 그 슬롯의 숨김 상태는 이름 없는 모든 앱이 공유하므로, 다른 앱이 숨겨두면
+        // 우리 항목까지 메뉴바에서 사라진다.
+        statusItem.autosaveName = "ClaudeUsageMonitorStatusItem"
+
+        // 메뉴바 항목이 유일한 진입점이다. 숨겨지면 종료할 방법조차 없다.
+        statusItem.isVisible = true
 
         popover.behavior = .transient
         // 팝오버 재질이 밝은 배경을 비치면 다크 팔레트의 대비가 무너진다.
@@ -41,7 +46,10 @@ final class StatusItemController {
     /// 5시간과 7일을 함께 표시한다. 하나만 보여주면 다른 쪽이 한도에 근접해도
     /// 안전해 보이는 상태가 만들어진다.
     func render() {
-        guard let button = statusItem.button else { return }
+        guard let button = statusItem.button else {
+            Log.ui.error("status item has no button")
+            return
+        }
         button.image = nil
         button.imagePosition = .noImage
         button.attributedTitle = MenuBarLabel.attributedTitle(

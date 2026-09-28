@@ -23,8 +23,8 @@ cd claude-usage-monitor
 ./build.sh --install
 ```
 
-This builds the app, copies it to `/Applications`, and launches it.
-Omit `--install` to build into `./build` without installing.
+This builds the app, moves it to `/Applications`, and launches it.
+Omit `--install` to build into `./build.noindex` without installing.
 
 No prebuilt release is available yet, so you have to build from source.
 

@@ -4,6 +4,7 @@ import OSLog
 enum Log {
     static let auth = Logger(subsystem: subsystem, category: "auth")
     static let network = Logger(subsystem: subsystem, category: "network")
+    static let ui = Logger(subsystem: subsystem, category: "ui")
 
     private static let subsystem = Bundle.main.bundleIdentifier ?? "claude-usage-monitor"
 }

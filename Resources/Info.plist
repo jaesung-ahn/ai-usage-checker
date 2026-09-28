@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>ClaudeUsageMonitor</string>
 	<key>CFBundleIdentifier</key>
-	<string>dev.jaesungahn.claude-usage-monitor</string>
+	<string>dev.jaesungahn.ClaudeUsageMonitor</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
