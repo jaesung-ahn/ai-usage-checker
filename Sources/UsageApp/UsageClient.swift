@@ -2,7 +2,8 @@ import Foundation
 import UsageCore
 
 enum UsageClientError: Error {
-    case noToken
+    /// 토큰을 읽지 못했다. 이유에 따라 안내가 달라진다.
+    case credentials(TokenError)
     case unauthorized
     case rateLimited(retryAfter: TimeInterval?)
     case http(Int)
@@ -22,9 +23,16 @@ struct UsageClient {
         self.session = session
     }
 
-    func fetch(now: Date = Date()) async throws -> UsageReading {
-        guard let token = tokenStore.accessToken(now: now) else {
-            throw UsageClientError.noToken
+    func forgetCredentials() {
+        tokenStore.invalidate()
+    }
+
+    /// `interactive`가 참일 때만 키체인 권한 창을 띄울 수 있다.
+    func fetch(now: Date = Date(), interactive: Bool) async throws -> UsageReading {
+        let token: String
+        switch tokenStore.accessToken(interactive: interactive) {
+        case .success(let value): token = value
+        case .failure(let reason): throw UsageClientError.credentials(reason)
         }
 
         var request = URLRequest(url: endpoint)

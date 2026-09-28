@@ -36,7 +36,8 @@ final class StatusItemController {
 
         // 값이 바뀌면 스스로 다시 그린다. 갱신 경로마다 render를 부르면 빠뜨리기 쉽다.
         // @Published는 willSet에서 방출되므로 메인 런루프로 한 번 넘겨 갱신 후의 값을 읽는다.
-        cancellable = state.$reading
+        cancellable = state.$reading.map { _ in () }
+            .merge(with: state.$connection.map { _ in () })
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.render() }
 
@@ -55,7 +56,8 @@ final class StatusItemController {
         button.attributedTitle = MenuBarLabel.attributedTitle(
             items: menuBarItems(reading: state.reading, thresholds: state.thresholds),
             strings: state.strings,
-            placeholder: state.strings("menubar.placeholder")
+            placeholder: state.strings("menubar.placeholder"),
+            needsAttention: state.connection.prompt != nil
         )
     }
 

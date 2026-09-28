@@ -12,10 +12,17 @@ enum MenuBarLabel {
     static func attributedTitle(
         items: [MenuBarItem],
         strings: Strings,
-        placeholder: String
+        placeholder: String,
+        needsAttention: Bool = false
     ) -> NSAttributedString {
         let result = NSMutableAttributedString()
         let separator = strings("menubar.separator")
+
+        // 값이 `--`인 것만으로는 불러오는 중인지 조치가 필요한지 구분되지 않는다.
+        if needsAttention, let mark = attentionMark {
+            result.append(mark)
+            result.append(NSAttributedString(string: " ", attributes: labelAttributes))
+        }
 
         for (index, item) in items.enumerated() {
             if index > 0 {
@@ -43,6 +50,28 @@ enum MenuBarLabel {
     /// 값과의 위계는 굵기와 크기로 만든다.
     private static var labelAttributes: [NSAttributedString.Key: Any] {
         [.font: NSFont.systemFont(ofSize: fontSize - 1.5, weight: .regular)]
+    }
+
+    /// 경고 색을 직접 칠한다. 템플릿 이미지는 첨부 문자열 안에서 메뉴바 색을 따르지 않는다.
+    private static var attentionMark: NSAttributedString? {
+        let configuration = NSImage.SymbolConfiguration(pointSize: fontSize - 1.5, weight: .semibold)
+            .applying(.init(paletteColors: [NSColor(Theme.color(for: .warning))]))
+        guard let image = NSImage(
+            systemSymbolName: "exclamationmark.triangle.fill",
+            accessibilityDescription: nil
+        )?.withSymbolConfiguration(configuration) else { return nil }
+
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        // 글자 기준선에 맞춘다. 그대로 두면 기호 아래쪽이 기준선에 붙어 떠 보인다.
+        let font = NSFont.systemFont(ofSize: fontSize)
+        attachment.bounds = CGRect(
+            x: 0,
+            y: (font.capHeight - image.size.height) / 2,
+            width: image.size.width,
+            height: image.size.height
+        )
+        return NSAttributedString(attachment: attachment)
     }
 
     /// 숫자는 고정폭이라 자릿수가 같으면 폭이 흔들리지 않는다.

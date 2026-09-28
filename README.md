@@ -30,12 +30,25 @@ No prebuilt release is available yet, so you have to build from source.
 
 ## Authentication
 
-There is nothing to configure. The app reuses the OAuth token that Claude Code already stores,
-reading `~/.claude/.credentials.json` first and falling back to the macOS Keychain.
-macOS asks for permission on first Keychain access.
+The app reuses the OAuth token that Claude Code already stores. It reads
+`~/.claude/.credentials.json` first and falls back to the macOS Keychain.
+
+- **Connect.** On first launch the popover shows a Connect button. The app does not touch the
+  Keychain until you press it. macOS then asks for permission. Choose "Always Allow" to connect
+  automatically on later launches; "Allow" lasts until the app quits
+- **Automatic reads never prompt.** Launch and periodic refreshes read the Keychain with user
+  interaction disabled. If permission is needed, the app shows the Connect button instead of a
+  system dialog
+- **Disconnect.** Disconnect in the popover stops the app from reading the token, including on
+  later launches. The Keychain permission itself stays. To remove it, open Keychain Access, find
+  `Claude Code-credentials`, and remove ClaudeUsageMonitor from its Access Control list
 
 The token stays in memory. It is never logged, written to disk, or sent anywhere except
 `api.anthropic.com`.
+
+Anthropic's [terms for Claude Code](https://code.claude.com/docs/en/legal-and-compliance)
+restrict using subscription OAuth tokens outside Claude Code. This app only reads usage, but it
+is not endorsed by Anthropic, and you should review those terms before using it.
 
 ## How it works
 
@@ -54,7 +67,7 @@ The sync interval is configurable from the popover (1 minute to 1 hour, 5 minute
 ## Development
 
 ```bash
-swift test      # 38 tests
+swift test      # 41 tests
 swift build
 ```
 
