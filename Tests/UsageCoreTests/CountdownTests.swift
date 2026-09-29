@@ -20,19 +20,8 @@ final class CountdownTests: XCTestCase {
         XCTAssertEqual(future?.isStale, false)
     }
 
-    func testPopoverShowsSeconds() {
+    func testShowsSeconds() {
         let c = Countdown(remaining: 3661, isStale: false)
-        XCTAssertEqual(formatCountdown(c, style: .popover), "1h 1m 1s")
-    }
-
-    func testMenuBarOmitsSeconds() {
-        XCTAssertEqual(
-            formatCountdown(Countdown(remaining: 3661, isStale: false), style: .menuBar),
-            "1h 1m"
-        )
-        XCTAssertEqual(
-            formatCountdown(Countdown(remaining: 125, isStale: false), style: .menuBar),
-            "2m"
-        )
+        XCTAssertEqual(formatCountdown(c), "1h 1m 1s")
     }
 }

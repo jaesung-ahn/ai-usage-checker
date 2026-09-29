@@ -253,7 +253,7 @@ private struct PoolCard: View {
                         countdown.isStale
                             ? strings("reset.soon")
                             : strings("reset.countdown", [
-                                "time": formatCountdown(countdown, style: .popover)
+                                "time": formatCountdown(countdown)
                               ])
                     )
                     .font(.system(size: 11, weight: .semibold))

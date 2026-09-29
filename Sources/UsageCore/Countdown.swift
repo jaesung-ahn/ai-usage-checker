@@ -16,24 +16,11 @@ public func countdown(resetsAt: Date?, now: Date) -> Countdown? {
     return Countdown(remaining: max(0, raw), isStale: raw < 0)
 }
 
-public enum CountdownStyle: Equatable, Sendable {
-    /// 팝오버. 초까지 표시하고 1초마다 갱신한다.
-    case popover
-    /// 메뉴바. 초를 표시하지 않는다. 1초마다 상태 아이템을 다시 그리는 비용이
-    /// 표시 가치보다 크다.
-    case menuBar
-}
-
-public func formatCountdown(_ countdown: Countdown, style: CountdownStyle) -> String {
+/// 팝오버 형식. 초까지 표시하고 1초마다 갱신한다. 메뉴바에는 카운트다운을 두지 않는다.
+public func formatCountdown(_ countdown: Countdown) -> String {
     let total = Int(countdown.remaining)
     let hours = total / 3600
     let minutes = (total % 3600) / 60
     let seconds = total % 60
-
-    switch style {
-    case .popover:
-        return "\(hours)h \(minutes)m \(seconds)s"
-    case .menuBar:
-        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-    }
+    return "\(hours)h \(minutes)m \(seconds)s"
 }
