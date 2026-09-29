@@ -67,14 +67,14 @@ The sync interval is configurable from the popover (1 minute to 1 hour, 5 minute
 ## Development
 
 ```bash
-swift test      # 40 tests
+swift test      # 53 tests
 swift build
 ```
 
 The package has two targets:
 
 - `UsageCore` — pure logic. No AppKit, SwiftUI, URLSession or Keychain. This is where response
-  normalization, thresholds, countdowns and request gating live, and it is the only target under test
+  normalization, thresholds, countdowns, request gating and connection state transitions live, and it is the only target under test
 - `UsageApp` — the menu bar app. AppKit and SwiftUI are confined here
 
 Tests read real API responses from `Tests/Fixtures/`. To refresh them after an API change,
