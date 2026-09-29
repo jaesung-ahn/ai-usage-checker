@@ -24,3 +24,11 @@ public func formatCountdown(_ countdown: Countdown) -> String {
     let seconds = total % 60
     return "\(hours)h \(minutes)m \(seconds)s"
 }
+
+/// 요청 제한 대기 형식. 남은 시간을 올림해 0초로 보이는 순간을 만들지 않는다.
+public func formatRetryDelay(_ seconds: TimeInterval) -> String {
+    let total = Int(seconds.rounded(.up))
+    let minutes = total / 60
+    let remainder = total % 60
+    return minutes > 0 ? "\(minutes)m \(remainder)s" : "\(remainder)s"
+}

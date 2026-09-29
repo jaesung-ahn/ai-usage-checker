@@ -80,4 +80,31 @@ final class ApiSourceTests: XCTestCase {
         let reading = ApiSource.normalize(json: json, observedAt: observedAt)
         XCTAssertTrue(reading.weeklyScoped.isEmpty, "무엇의 한도인지 알 수 없으면 표시하지 않는다")
     }
+
+    // MARK: - 빈 응답
+
+    func testCapturedFixtureIsNotEmpty() throws {
+        let json = try Fixtures.json("usage-response.json")
+        XCTAssertFalse(ApiSource.normalize(json: json, observedAt: observedAt).isEmpty)
+    }
+
+    /// 응답 형태가 바뀌어 아는 키가 하나도 없으면 성공으로 받지 않는다.
+    func testResponseWithOnlyUnknownKeysIsEmpty() {
+        let json: [String: Any] = ["something_new": ["utilization": 10]]
+        XCTAssertTrue(ApiSource.normalize(json: json, observedAt: observedAt).isEmpty)
+    }
+
+    func testAllNullPoolsAreEmpty() {
+        let json: [String: Any] = ["five_hour": NSNull(), "seven_day": NSNull()]
+        XCTAssertTrue(ApiSource.normalize(json: json, observedAt: observedAt).isEmpty)
+    }
+
+    func testScopedPoolAloneIsNotEmpty() {
+        let json: [String: Any] = ["limits": [[
+            "kind": "weekly_scoped",
+            "percent": 5,
+            "scope": ["model": ["display_name": "Fable"]],
+        ]]]
+        XCTAssertFalse(ApiSource.normalize(json: json, observedAt: observedAt).isEmpty)
+    }
 }

@@ -33,4 +33,10 @@ public struct UsageReading: Equatable, Sendable {
         self.weeklyAll = weeklyAll
         self.weeklyScoped = weeklyScoped
     }
+
+    /// 아는 풀이 하나도 없다. 응답 형태가 바뀌어 아무것도 읽지 못한 경우다.
+    /// 성공으로 받으면 빈 화면이 현재 값처럼 보인다.
+    public var isEmpty: Bool {
+        session == nil && weeklyAll == nil && weeklyScoped.isEmpty
+    }
 }

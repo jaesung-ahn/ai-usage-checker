@@ -113,20 +113,20 @@ final class AppState: ObservableObject {
 
     /// 상태 줄에 띄울 안내. 정상이면 표시하지 않는다.
     var notice: String? {
-        switch loadState {
-        case .idle, .ok: return nil
-        case .rateLimited: return strings("status.rateLimited")
-        case .failed: return strings("status.apiFailed")
-        }
+        problemKey.map { strings($0) }
     }
 
     /// 값이 하나도 없을 때 화면 가운데에 띄울 설명.
     /// 제한에 걸린 상태를 "불러오는 중"으로 보여주면 사실과 다르다.
-    func emptyStateMessage(at now: Date = Date()) -> String {
+    var emptyStateMessage: String {
+        strings(problemKey ?? "status.loading")
+    }
+
+    private var problemKey: String? {
         switch loadState {
-        case .rateLimited: return strings("status.rateLimited")
-        case .failed: return strings("status.apiFailed")
-        case .idle, .ok: return strings("status.loading")
+        case .idle, .ok: return nil
+        case .rateLimited: return "status.rateLimited"
+        case .failed: return "status.apiFailed"
         }
     }
 
@@ -134,14 +134,7 @@ final class AppState: ObservableObject {
     func retryMessage(at now: Date = Date()) -> String? {
         let remaining = cooldown(at: now)
         guard remaining > 0 else { return nil }
-        return strings("status.retryIn", ["time": Self.durationText(remaining)])
-    }
-
-    private static func durationText(_ seconds: TimeInterval) -> String {
-        let total = Int(seconds.rounded(.up))
-        let minutes = total / 60
-        let remainder = total % 60
-        return minutes > 0 ? "\(minutes)m \(remainder)s" : "\(remainder)s"
+        return strings("status.retryIn", ["time": formatRetryDelay(remaining)])
     }
 
     private static func loadStrings() -> Strings {

@@ -122,9 +122,7 @@ struct PopoverView: View {
             }
             .padding(.top, 2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Theme.cardPadding)
-        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: Theme.cardCornerRadius))
+        .messageCard()
     }
 
     private var connectionIcon: String {
@@ -141,7 +139,7 @@ struct PopoverView: View {
             Image(systemName: icon)
                 .font(.system(size: 18))
                 .foregroundStyle(Theme.muted)
-            Text(state.emptyStateMessage(at: now))
+            Text(state.emptyStateMessage)
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.label)
                 .fixedSize(horizontal: false, vertical: true)
@@ -152,9 +150,7 @@ struct PopoverView: View {
                     .foregroundStyle(Theme.muted)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Theme.cardPadding)
-        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: Theme.cardCornerRadius))
+        .messageCard()
     }
 
     private var settings: some View {
@@ -217,6 +213,15 @@ struct PopoverView: View {
             .foregroundStyle(Theme.muted)
         }
         .padding(.top, 2)
+    }
+}
+
+private extension View {
+    /// 연결 안내와 빈 상태처럼 값 대신 문장을 담는 카드.
+    func messageCard() -> some View {
+        frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Theme.cardPadding)
+            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: Theme.cardCornerRadius))
     }
 }
 

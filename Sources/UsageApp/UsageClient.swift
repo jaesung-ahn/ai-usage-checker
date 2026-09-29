@@ -65,6 +65,12 @@ struct UsageClient {
             throw UsageClientError.malformedResponse
         }
 
-        return ApiSource.normalize(json: json, observedAt: now)
+        let reading = ApiSource.normalize(json: json, observedAt: now)
+        guard !reading.isEmpty else {
+            // 응답 본문은 남기지 않는다. 형태가 바뀌었다는 사실만 기록한다.
+            Log.network.error("usage: response has no known pools")
+            throw UsageClientError.malformedResponse
+        }
+        return reading
     }
 }
