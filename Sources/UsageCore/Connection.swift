@@ -25,6 +25,45 @@ public enum Connection: Equatable, Sendable {
         case .expired: return ConnectionPrompt(state: "expired", actionKey: "action.reconnect")
         }
     }
+
+    /// 조회 결과를 받은 뒤의 상태.
+    public func next(on event: ConnectionEvent) -> Connection {
+        switch event {
+        case .fetched: return .connected
+        case .notFound: return .notLoggedIn
+        case .denied: return .accessDenied
+        case .unauthorized: return .expired
+        case .needsConsent:
+            switch self {
+            case .connected, .expired:
+                // 연결했던 적이 있다. Claude Code가 토큰을 갱신해 새 항목을 읽을 허락이 필요하다.
+                // 첫 연결 안내를 띄우면 사용자는 연결이 풀린 이유를 알 수 없다.
+                return .expired
+            case .accessDenied:
+                // 거부 안내는 사용자가 다시 시도할 때까지 유지한다. 자동 조회가 덮어쓰면
+                // 방금 거부한 이유가 화면에서 사라진다.
+                return .accessDenied
+            case .notConnected, .notLoggedIn:
+                return .notConnected
+            }
+        }
+    }
+}
+
+/// 연결 상태를 바꾸는 조회 결과.
+///
+/// 요청 제한과 네트워크 오류는 연결 문제가 아니므로 여기에 없다. 연결 상태를 그대로 둔다.
+public enum ConnectionEvent: Equatable, Sendable {
+    /// 사용량을 받았다.
+    case fetched
+    /// 파일과 키체인 어디에도 자격증명이 없다.
+    case notFound
+    /// 키체인 창에서 거부했다.
+    case denied
+    /// 창 없이 읽으려 했으나 사용자 허락이 필요하다.
+    case needsConsent
+    /// 서버가 토큰을 거부했다 (401, 403).
+    case unauthorized
 }
 
 /// 연결 안내 화면의 문구 키.

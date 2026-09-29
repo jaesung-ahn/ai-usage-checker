@@ -73,27 +73,16 @@ final class AppState: ObservableObject {
             lastUpdated = now
             loadState = .ok
             gate.recordSuccess()
-            connection = .connected
+            apply(.fetched)
             defaults.removeObject(forKey: Self.disconnectedKey)
         } catch UsageClientError.credentials(.notFound) {
-            connection = .notLoggedIn
+            apply(.notFound)
         } catch UsageClientError.credentials(.denied) {
-            connection = .accessDenied
+            apply(.denied)
         } catch UsageClientError.credentials(.needsConsent) {
-            switch connection {
-            case .connected, .expired:
-                // 연결했던 적이 있다. Claude Code가 토큰을 갱신해 새 항목을 읽을 허락이 필요하다.
-                // 첫 연결 안내를 띄우면 사용자는 연결이 풀린 이유를 알 수 없다.
-                connection = .expired
-            case .accessDenied:
-                // 거부 안내는 사용자가 다시 시도할 때까지 유지한다. 자동 조회가 덮어쓰면
-                // 방금 거부한 이유가 화면에서 사라진다.
-                break
-            case .notConnected, .notLoggedIn:
-                connection = .notConnected
-            }
+            apply(.needsConsent)
         } catch UsageClientError.unauthorized {
-            connection = .expired
+            apply(.unauthorized)
         } catch UsageClientError.rateLimited(let retryAfter) {
             gate.recordRateLimited(at: now, retryAfter: retryAfter)
             loadState = .rateLimited
@@ -112,6 +101,12 @@ final class AppState: ObservableObject {
         loadState = .idle
         connection = .notConnected
         defaults.set(true, forKey: Self.disconnectedKey)
+    }
+
+    /// 상태가 그대로면 대입하지 않는다. 대입만으로도 메뉴바가 다시 그려진다.
+    private func apply(_ event: ConnectionEvent) {
+        let next = connection.next(on: event)
+        if next != connection { connection = next }
     }
 
     private var isDisconnectedByUser: Bool { defaults.bool(forKey: Self.disconnectedKey) }
