@@ -80,9 +80,18 @@ final class AppState: ObservableObject {
         } catch UsageClientError.credentials(.denied) {
             connection = .accessDenied
         } catch UsageClientError.credentials(.needsConsent) {
-            // 거부 안내는 사용자가 다시 시도할 때까지 유지한다. 자동 조회가 덮어쓰면
-            // 방금 거부한 이유가 화면에서 사라진다.
-            if connection != .accessDenied { connection = .notConnected }
+            switch connection {
+            case .connected, .expired:
+                // 연결했던 적이 있다. Claude Code가 토큰을 갱신해 새 항목을 읽을 허락이 필요하다.
+                // 첫 연결 안내를 띄우면 사용자는 연결이 풀린 이유를 알 수 없다.
+                connection = .expired
+            case .accessDenied:
+                // 거부 안내는 사용자가 다시 시도할 때까지 유지한다. 자동 조회가 덮어쓰면
+                // 방금 거부한 이유가 화면에서 사라진다.
+                break
+            case .notConnected, .notLoggedIn:
+                connection = .notConnected
+            }
         } catch UsageClientError.unauthorized {
             connection = .expired
         } catch UsageClientError.rateLimited(let retryAfter) {

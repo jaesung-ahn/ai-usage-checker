@@ -54,7 +54,11 @@ final class StatusItemController {
         button.image = nil
         button.imagePosition = .noImage
         button.attributedTitle = MenuBarLabel.attributedTitle(
-            items: menuBarItems(reading: state.reading, thresholds: state.thresholds),
+            // 연결 문제가 있으면 값을 갱신할 수 없다. 멈춘 값을 현재 값처럼 보여주지 않는다.
+            items: menuBarItems(
+                reading: state.connection == .connected ? state.reading : nil,
+                thresholds: state.thresholds
+            ),
             strings: state.strings,
             placeholder: state.strings("menubar.placeholder"),
             needsAttention: state.connection.prompt != nil
