@@ -5,13 +5,13 @@ import UsageCore
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var state: AppState!
-    private var statusItem: StatusItemController!
+    private var menuBar: MenuBarController!
     private var timer: Timer?
     private var cancellable: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         state = AppState()
-        statusItem = StatusItemController(state: state)
+        menuBar = MenuBarController(app: state)
 
         refresh()
         schedule(state.syncInterval)
@@ -35,6 +35,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func refresh() {
-        Task { @MainActor in await state.refresh() }
+        state.refreshEnabled()
     }
 }

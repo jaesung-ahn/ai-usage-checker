@@ -9,7 +9,9 @@ import UsageCore
 enum MenuBarLabel {
     private static let fontSize: CGFloat = 12.5
 
+    /// - Parameter prefix: 공급자 약칭. 아이템이 여럿일 때 어느 공급자인지 구분한다.
     static func attributedTitle(
+        prefix: String,
         items: [MenuBarItem],
         strings: Strings,
         placeholder: String,
@@ -17,6 +19,8 @@ enum MenuBarLabel {
     ) -> NSAttributedString {
         let result = NSMutableAttributedString()
         let separator = strings("menubar.separator")
+
+        result.append(NSAttributedString(string: prefix + " ", attributes: prefixAttributes))
 
         // 값이 `--`인 것만으로는 불러오는 중인지 조치가 필요한지 구분되지 않는다.
         if needsAttention, let mark = attentionMark {
@@ -50,6 +54,11 @@ enum MenuBarLabel {
     /// 값과의 위계는 굵기와 크기로 만든다.
     private static var labelAttributes: [NSAttributedString.Key: Any] {
         [.font: NSFont.systemFont(ofSize: fontSize - 1.5, weight: .regular)]
+    }
+
+    /// 약칭은 창 라벨보다 굵게 둬서 아이템의 경계가 보이게 한다. 색은 같은 이유로 비워둔다.
+    private static var prefixAttributes: [NSAttributedString.Key: Any] {
+        [.font: NSFont.systemFont(ofSize: fontSize - 1.5, weight: .bold)]
     }
 
     /// 경고 색을 직접 칠한다. 템플릿 이미지는 첨부 문자열 안에서 메뉴바 색을 따르지 않는다.

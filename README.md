@@ -70,7 +70,7 @@ The sync interval is configurable from the popover (1 minute to 1 hour, 5 minute
 ## Development
 
 ```bash
-swift test      # 73 tests
+swift test      # 85 tests
 swift build
 ```
 

@@ -2,8 +2,10 @@ import Combine
 import SwiftUI
 import UsageCore
 
+/// 공급자 하나의 팝오버.
 struct PopoverView: View {
-    @ObservedObject var state: AppState
+    @ObservedObject var app: AppState
+    @ObservedObject var state: ProviderState
 
     @State private var now = Date()
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -24,7 +26,7 @@ struct PopoverView: View {
             header
 
             // 연결 문제는 이전 값보다 먼저 보여준다. 조치하지 않으면 값이 갱신되지 않는다.
-            if let prompt = state.connection.prompt {
+            if let prompt = state.prompt {
                 connectionCard(prompt)
             } else if let reading = state.reading {
                 cards(for: reading)
@@ -33,6 +35,7 @@ struct PopoverView: View {
             }
 
             settings
+            ProviderToggleList(app: app)
             footer
         }
         .padding(14)
@@ -43,7 +46,7 @@ struct PopoverView: View {
 
     private var header: some View {
         HStack {
-            Text(state.strings("app.name"))
+            Text(state.strings(state.provider.titleKey))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.title)
 
@@ -77,7 +80,7 @@ struct PopoverView: View {
         WindowCard(
             title: windowTitle(window, strings: state.strings),
             window: window,
-            level: state.thresholds.level(for: window.percent),
+            level: app.thresholds.level(for: window.percent),
             now: now,
             strings: state.strings
         )
@@ -154,7 +157,7 @@ struct PopoverView: View {
 
             Spacer()
 
-            Picker("", selection: $state.syncInterval) {
+            Picker("", selection: $app.syncInterval) {
                 ForEach(SyncInterval.allCases, id: \.self) { interval in
                     Text(state.strings(interval.labelKey)).tag(interval)
                 }
@@ -186,7 +189,7 @@ struct PopoverView: View {
 
             Spacer()
 
-            if state.connection == .connected {
+            if state.canDisconnect {
                 Button(state.strings("action.disconnect")) {
                     state.disconnect()
                     // 해제는 이 앱만 멈춘다. 키체인 권한이 남아 있다는 사실을 숨기지 않는다.
@@ -206,6 +209,64 @@ struct PopoverView: View {
             .foregroundStyle(Theme.muted)
         }
         .padding(.top, 2)
+    }
+}
+
+/// 공급자별 메뉴바 아이템 토글. 공급자 팝오버와 모두 꺼짐 팝오버가 함께 쓴다.
+struct ProviderToggleList: View {
+    @ObservedObject var app: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(app.strings("settings.providers"))
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.label)
+
+            ForEach(Provider.allCases, id: \.self) { provider in
+                Toggle(isOn: Binding(
+                    get: { app.toggles.isEnabled(provider) },
+                    set: { app.setEnabled(provider, $0) }
+                )) {
+                    Text(app.strings(provider.nameKey))
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.title)
+                }
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+            }
+        }
+        .padding(.horizontal, 2)
+    }
+}
+
+/// 모든 공급자가 꺼졌을 때 앱 아이콘 아이템의 팝오버. 다시 켜거나 종료할 수 있어야 한다.
+struct SettingsPopoverView: View {
+    @ObservedObject var app: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.cardSpacing) {
+            Text(app.strings("settings.allOff"))
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.label)
+                .fixedSize(horizontal: false, vertical: true)
+                .messageCard()
+
+            ProviderToggleList(app: app)
+
+            HStack {
+                Spacer()
+                Button(app.strings("action.quit")) {
+                    NSApplication.shared.terminate(nil)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 10))
+                .foregroundStyle(Theme.muted)
+            }
+            .padding(.top, 2)
+        }
+        .padding(14)
+        .frame(width: Theme.popoverWidth)
+        .background(Theme.surface)
     }
 }
 

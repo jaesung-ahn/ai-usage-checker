@@ -1,9 +1,10 @@
 import Foundation
 
-/// Claude Code 로그인 정보에 대한 연결 상태.
+/// 공급자 로그인 정보에 대한 연결 상태.
 ///
-/// 키체인 접근은 macOS 권한 창을 띄운다. 창은 사용자가 이 상태의 안내 버튼을
+/// Claude는 키체인 접근이 macOS 권한 창을 띄운다. 창은 사용자가 이 상태의 안내 버튼을
 /// 눌렀을 때만 뜨게 한다.
+/// Codex는 파일만 읽어 권한 창이 없다. 로그인 안 됨, 만료, 연결됨만 쓴다.
 public enum Connection: Equatable, Sendable {
     /// 사용자가 아직 연결한 적이 없다.
     case notConnected
@@ -15,14 +16,44 @@ public enum Connection: Equatable, Sendable {
     case expired
     case connected
 
+    /// 공급자를 켠 직후의 상태.
+    ///
+    /// Claude는 연결 버튼이 키체인 접근 동의다. 첫 자동 조회가 창 없이 확인해 바로잡는다.
+    /// Codex는 토글을 켜는 것이 연결 동의다. 문제는 조회 결과로만 드러난다.
+    public static func initial(for provider: Provider) -> Connection {
+        switch provider {
+        case .claude: return .notConnected
+        case .codex: return .connected
+        }
+    }
+
     /// 사용자 조치가 필요할 때의 안내. 연결되어 있으면 `nil`이다.
-    public var prompt: ConnectionPrompt? {
+    public func prompt(for provider: Provider) -> ConnectionPrompt? {
+        switch provider {
+        case .claude: return claudePrompt
+        case .codex: return codexPrompt
+        }
+    }
+
+    private var claudePrompt: ConnectionPrompt? {
         switch self {
         case .connected: return nil
-        case .notConnected: return ConnectionPrompt(state: "notConnected", actionKey: "action.connect")
-        case .notLoggedIn: return ConnectionPrompt(state: "notLoggedIn", actionKey: "action.recheck")
-        case .accessDenied: return ConnectionPrompt(state: "accessDenied", actionKey: "action.retry")
-        case .expired: return ConnectionPrompt(state: "expired", actionKey: "action.reconnect")
+        case .notConnected: return ConnectionPrompt(.claude, "notConnected", actionKey: "action.connect")
+        case .notLoggedIn: return ConnectionPrompt(.claude, "notLoggedIn", actionKey: "action.recheck")
+        case .accessDenied: return ConnectionPrompt(.claude, "accessDenied", actionKey: "action.retry")
+        case .expired: return ConnectionPrompt(.claude, "expired", actionKey: "action.reconnect")
+        }
+    }
+
+    /// 앱이 토큰을 갱신하지 않으므로 만료도 다시 확인만 할 수 있다. Codex를 실행하면 갱신된다.
+    private var codexPrompt: ConnectionPrompt? {
+        switch self {
+        case .connected: return nil
+        case .expired: return ConnectionPrompt(.codex, "expired", actionKey: "action.recheck")
+        // 연결 전과 권한 거부는 키체인을 거치지 않는 Codex에서 생기지 않는다.
+        // 생기더라도 조치할 길이 없는 화면을 만들지 않게 로그인 안내로 둔다.
+        case .notLoggedIn, .notConnected, .accessDenied:
+            return ConnectionPrompt(.codex, "notLoggedIn", actionKey: "action.recheck")
         }
     }
 
@@ -56,7 +87,7 @@ public enum Connection: Equatable, Sendable {
 public enum ConnectionEvent: Equatable, Sendable {
     /// 사용량을 받았다.
     case fetched
-    /// 파일과 키체인 어디에도 자격증명이 없다.
+    /// 자격증명이 없다. Codex는 ChatGPT 로그인 토큰이 없는 경우도 여기에 든다.
     case notFound
     /// 키체인 창에서 거부했다.
     case denied
@@ -72,9 +103,9 @@ public struct ConnectionPrompt: Equatable, Sendable {
     public let messageKey: String
     public let actionKey: String
 
-    init(state: String, actionKey: String) {
-        self.titleKey = "connection.\(state).title"
-        self.messageKey = "connection.\(state).message"
+    init(_ provider: Provider, _ state: String, actionKey: String) {
+        self.titleKey = "connection.\(provider.rawValue).\(state).title"
+        self.messageKey = "connection.\(provider.rawValue).\(state).message"
         self.actionKey = actionKey
     }
 }

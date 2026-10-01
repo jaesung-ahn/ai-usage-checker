@@ -3,7 +3,7 @@ import Security
 
 /// 토큰을 읽지 못한 이유. 화면 안내가 달라진다.
 enum TokenError: Error {
-    /// 파일과 키체인 어디에도 자격증명이 없다.
+    /// 자격증명이 없다. Claude는 파일과 키체인 어디에도 없는 경우, Codex는 ChatGPT 토큰이 없는 경우다.
     case notFound
     /// 키체인 접근이 거부되었다.
     case denied

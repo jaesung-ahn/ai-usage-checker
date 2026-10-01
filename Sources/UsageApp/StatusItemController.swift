@@ -3,10 +3,9 @@ import Combine
 import SwiftUI
 import UsageCore
 
-/// 메뉴바 아이템과 팝오버.
+/// 메뉴바 아이템 하나와 그 팝오버.
 @MainActor
 final class StatusItemController {
-    private let state: AppState
     private let statusItem: NSStatusItem
     private let popover = NSPopover()
     private var cancellable: AnyCancellable?
@@ -14,14 +13,22 @@ final class StatusItemController {
     /// 팝오버가 떠 있는 동안에만 설치되는 바깥 클릭 감시.
     private var outsideClickMonitor: Any?
 
-    init(state: AppState) {
-        self.state = state
+    /// - Parameters:
+    ///   - autosaveName: 아이템마다 고유해야 한다.
+    ///   - redraw: 값이 바뀔 때마다 방출한다. 그때만 라벨을 다시 그린다.
+    ///   - render: 라벨을 그린다.
+    init<Content: View>(
+        autosaveName: String,
+        content: Content,
+        redraw: AnyPublisher<Void, Never>,
+        render: @escaping (NSStatusBarButton) -> Void
+    ) {
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         // 이름을 주지 않으면 macOS가 Item-0 같은 공용 슬롯을 배정한다.
         // 그 슬롯의 숨김 상태는 이름 없는 모든 앱이 공유하므로, 다른 앱이 숨겨두면
-        // 우리 항목까지 메뉴바에서 사라진다.
-        statusItem.autosaveName = "ClaudeUsageMonitorStatusItem"
+        // 우리 항목까지 메뉴바에서 사라진다. 아이템끼리도 이름이 겹치면 같은 문제가 생긴다.
+        statusItem.autosaveName = autosaveName
 
         // 메뉴바 항목이 유일한 진입점이다. 숨겨지면 종료할 방법조차 없다.
         statusItem.isVisible = true
@@ -29,40 +36,33 @@ final class StatusItemController {
         popover.behavior = .transient
         // 팝오버 재질이 밝은 배경을 비치면 다크 팔레트의 대비가 무너진다.
         popover.appearance = NSAppearance(named: .darkAqua)
-        popover.contentViewController = NSHostingController(rootView: PopoverView(state: state))
+        popover.contentViewController = NSHostingController(rootView: content)
 
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover)
 
         // 값이 바뀌면 스스로 다시 그린다. 갱신 경로마다 render를 부르면 빠뜨리기 쉽다.
         // @Published는 willSet에서 방출되므로 메인 런루프로 한 번 넘겨 갱신 후의 값을 읽는다.
-        cancellable = state.$reading.map { _ in () }
-            .merge(with: state.$connection.map { _ in () })
+        let button = statusItem.button
+        cancellable = redraw
             .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.render() }
+            .sink { _ in
+                guard let button else { return }
+                render(button)
+            }
 
-        render()
+        if let button {
+            render(button)
+        } else {
+            Log.ui.error("status item has no button")
+        }
     }
 
-    /// 5시간과 7일을 함께 표시한다. 하나만 보여주면 다른 쪽이 한도에 근접해도
-    /// 안전해 보이는 상태가 만들어진다.
-    func render() {
-        guard let button = statusItem.button else {
-            Log.ui.error("status item has no button")
-            return
-        }
-        button.image = nil
-        button.imagePosition = .noImage
-        button.attributedTitle = MenuBarLabel.attributedTitle(
-            // 연결 문제가 있으면 값을 갱신할 수 없다. 멈춘 값을 현재 값처럼 보여주지 않는다.
-            items: menuBarItems(
-                reading: state.connection == .connected ? state.reading : nil,
-                thresholds: state.thresholds
-            ),
-            strings: state.strings,
-            placeholder: state.strings("menubar.placeholder"),
-            needsAttention: state.connection.prompt != nil
-        )
+    /// 메뉴바에서 내린다. 떠 있는 팝오버와 바깥 클릭 감시도 함께 거둔다.
+    func remove() {
+        close()
+        cancellable = nil
+        NSStatusBar.system.removeStatusItem(statusItem)
     }
 
     @objc private func togglePopover() {
