@@ -65,10 +65,10 @@ struct UsageClient {
             throw UsageClientError.malformedResponse
         }
 
-        let reading = ApiSource.normalize(json: json, observedAt: now)
+        let reading = ClaudeSource.normalize(json: json, observedAt: now)
         guard !reading.isEmpty else {
             // 응답 본문은 남기지 않는다. 형태가 바뀌었다는 사실만 기록한다.
-            Log.network.error("usage: response has no known pools")
+            Log.network.error("usage: response has no known windows")
             throw UsageClientError.malformedResponse
         }
         return reading

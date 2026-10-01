@@ -66,25 +66,18 @@ struct PopoverView: View {
         .padding(.bottom, 2)
     }
 
-    @ViewBuilder
+    /// 값이 없는 창은 목록에 없으므로 행도 만들지 않는다. 0%로 표시하면 사용량이 없는 것처럼 보인다.
     private func cards(for reading: UsageReading) -> some View {
-        if let session = reading.session {
-            card(title: state.strings("pool.session"), pool: session)
-        }
-        if let weekly = reading.weeklyAll {
-            card(title: state.strings("pool.weeklyAll"), pool: weekly)
-        }
-        // 값이 nil인 풀은 행 자체를 만들지 않는다. 0%로 표시하면 사용량이 없는 것처럼 보인다.
-        ForEach(reading.weeklyScoped, id: \.name) { pool in
-            card(title: state.strings("pool.weeklyScoped", ["name": pool.name]), pool: pool)
+        ForEach(reading.windows) { window in
+            card(window)
         }
     }
 
-    private func card(title: String, pool: Pool) -> some View {
-        PoolCard(
-            title: title,
-            pool: pool,
-            level: state.thresholds.level(for: pool.percent),
+    private func card(_ window: UsageWindow) -> some View {
+        WindowCard(
+            title: windowTitle(window, strings: state.strings),
+            window: window,
+            level: state.thresholds.level(for: window.percent),
             now: now,
             strings: state.strings
         )
@@ -225,9 +218,9 @@ private extension View {
     }
 }
 
-private struct PoolCard: View {
+private struct WindowCard: View {
     let title: String
-    let pool: Pool
+    let window: UsageWindow
     let level: UsageLevel
     let now: Date
     let strings: Strings
@@ -241,7 +234,7 @@ private struct PoolCard: View {
                 .foregroundStyle(Theme.label)
 
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text("\(Int(pool.percent))")
+                Text("\(Int(window.percent))")
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Theme.fill(for: level))
@@ -250,9 +243,9 @@ private struct PoolCard: View {
                     .foregroundStyle(accent)
             }
 
-            UsageBar(percent: pool.percent, level: level)
+            UsageBar(percent: window.percent, level: level)
 
-            if let countdown = countdown(resetsAt: pool.resetsAt, now: now) {
+            if let countdown = countdown(resetsAt: window.resetsAt, now: now) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(
                         countdown.isStale
@@ -265,7 +258,7 @@ private struct PoolCard: View {
                     .monospacedDigit()
                     .foregroundStyle(Theme.countdown)
 
-                    if let resetsAt = pool.resetsAt {
+                    if let resetsAt = window.resetsAt {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 9, weight: .semibold))

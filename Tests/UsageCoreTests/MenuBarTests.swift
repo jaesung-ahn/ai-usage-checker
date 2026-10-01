@@ -2,12 +2,18 @@ import XCTest
 @testable import UsageCore
 
 final class MenuBarTests: XCTestCase {
-    private func reading(session: Double?, weekly: Double?) -> UsageReading {
-        UsageReading(
+    private func reading(
+        _ provider: Provider = .claude,
+        session: Double?,
+        weekly: Double?
+    ) -> UsageReading {
+        var windows = [UsageWindow(scope: "Fable", length: .sevenDays, percent: 23, resetsAt: nil)]
+        if let session { windows.append(UsageWindow(length: .fiveHours, percent: session, resetsAt: nil)) }
+        if let weekly { windows.append(UsageWindow(length: .sevenDays, percent: weekly, resetsAt: nil)) }
+        return UsageReading(
+            provider: provider,
             observedAt: Date(timeIntervalSince1970: 1_790_000_000),
-            session: session.map { Pool(name: "session", percent: $0, resetsAt: nil) },
-            weeklyAll: weekly.map { Pool(name: "weeklyAll", percent: $0, resetsAt: nil) },
-            weeklyScoped: [Pool(name: "Fable", percent: 23, resetsAt: nil)]
+            windows: windows
         )
     }
 
@@ -43,5 +49,20 @@ final class MenuBarTests: XCTestCase {
 
         XCTAssertNil(items[0].percent, "값 없음과 0%는 다른 상태다")
         XCTAssertEqual(items[1].percent, 18)
+    }
+
+    /// Codex는 5시간 창 없이 7일 창만 보낸 적이 있다. 자리는 그대로 두고 값만 비운다.
+    func testProviderWithoutSessionWindowKeepsSlot() {
+        let items = menuBarItems(reading: reading(.codex, session: nil, weekly: 40), thresholds: .default)
+
+        XCTAssertEqual(items.map(\.labelKey), ["menubar.session", "menubar.weekly"])
+        XCTAssertNil(items[0].percent)
+        XCTAssertEqual(items[1].percent, 40)
+    }
+
+    func testScopedSevenDayWindowIsNotTakenAsWeekly() {
+        // 범위가 있는 7일 창은 공급자 전체의 7일 창이 아니다.
+        let items = menuBarItems(reading: reading(session: 30, weekly: nil), thresholds: .default)
+        XCTAssertNil(items[1].percent)
     }
 }
