@@ -12,7 +12,10 @@ Click the menu bar item for details: per-model weekly pools, reset countdowns, a
 ## Requirements
 
 - macOS 13 or later
-- Xcode 15 or later (SwiftPM's default build system requires it)
+- Xcode (the full app, not just the Command Line Tools). Tested with Xcode 27.0.
+  With only the Command Line Tools installed, `swift build` fails. After installing Xcode,
+  open it once to finish setup, and if `xcode-select -p` still points to `CommandLineTools`, run
+  `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`
 - Claude Code, already logged in
 
 ## Install

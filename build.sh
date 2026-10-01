@@ -4,6 +4,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# SwiftPM's default build system fails with only the Command Line Tools.
+if xcode-select -p 2>/dev/null | grep -q CommandLineTools; then
+  echo "error: Xcode is required. The Command Line Tools alone cannot build this package." >&2
+  echo "Install Xcode, then run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer" >&2
+  exit 1
+fi
+
 NAME="ClaudeUsageMonitor"
 BUILD_DIR="build.noindex"
 BUNDLE="${BUILD_DIR}/${NAME}.app"
