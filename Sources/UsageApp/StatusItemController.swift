@@ -6,8 +6,15 @@ import UsageCore
 /// 메뉴바 아이템 하나와 그 팝오버.
 @MainActor
 final class StatusItemController {
+    /// 아이템을 눌렀을 때 할 일.
+    enum Click {
+        case popover(AnyView)
+        case action(() -> Void)
+    }
+
     private let statusItem: NSStatusItem
     private let popover = NSPopover()
+    private let onClick: (() -> Void)?
     private var cancellable: AnyCancellable?
 
     /// 팝오버가 떠 있는 동안에만 설치되는 바깥 클릭 감시.
@@ -17,9 +24,9 @@ final class StatusItemController {
     ///   - autosaveName: 아이템마다 고유해야 한다.
     ///   - redraw: 값이 바뀔 때마다 방출한다. 그때만 라벨을 다시 그린다.
     ///   - render: 라벨을 그린다.
-    init<Content: View>(
+    init(
         autosaveName: String,
-        content: Content,
+        click: Click,
         redraw: AnyPublisher<Void, Never>,
         render: @escaping (NSStatusBarButton) -> Void
     ) {
@@ -33,13 +40,19 @@ final class StatusItemController {
         // 메뉴바 항목이 유일한 진입점이다. 숨겨지면 종료할 방법조차 없다.
         statusItem.isVisible = true
 
-        popover.behavior = .transient
-        // 팝오버 재질이 밝은 배경을 비치면 다크 팔레트의 대비가 무너진다.
-        popover.appearance = NSAppearance(named: .darkAqua)
-        popover.contentViewController = NSHostingController(rootView: content)
+        switch click {
+        case .popover(let content):
+            onClick = nil
+            popover.behavior = .transient
+            // 팝오버 재질이 밝은 배경을 비치면 다크 팔레트의 대비가 무너진다.
+            popover.appearance = NSAppearance(named: .darkAqua)
+            popover.contentViewController = NSHostingController(rootView: content)
+        case .action(let action):
+            onClick = action
+        }
 
         statusItem.button?.target = self
-        statusItem.button?.action = #selector(togglePopover)
+        statusItem.button?.action = #selector(clicked)
 
         // 값이 바뀌면 스스로 다시 그린다. 갱신 경로마다 render를 부르면 빠뜨리기 쉽다.
         // @Published는 willSet에서 방출되므로 메인 런루프로 한 번 넘겨 갱신 후의 값을 읽는다.
@@ -60,13 +73,17 @@ final class StatusItemController {
 
     /// 메뉴바에서 내린다. 떠 있는 팝오버와 바깥 클릭 감시도 함께 거둔다.
     func remove() {
-        close()
+        closePopover()
         cancellable = nil
         NSStatusBar.system.removeStatusItem(statusItem)
     }
 
-    @objc private func togglePopover() {
-        popover.isShown ? close() : show()
+    @objc private func clicked() {
+        if let onClick {
+            onClick()
+        } else {
+            popover.isShown ? closePopover() : show()
+        }
     }
 
     /// `.transient`만으로는 다른 앱을 클릭했을 때 닫히지 않는다.
@@ -81,11 +98,11 @@ final class StatusItemController {
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
         ) { [weak self] _ in
-            Task { @MainActor in self?.close() }
+            Task { @MainActor in self?.closePopover() }
         }
     }
 
-    private func close() {
+    func closePopover() {
         popover.performClose(nil)
 
         // 감시를 남겨두면 팝오버가 닫힌 뒤에도 모든 클릭을 계속 받는다.

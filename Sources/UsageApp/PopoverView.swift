@@ -6,6 +6,8 @@ import UsageCore
 struct PopoverView: View {
     @ObservedObject var app: AppState
     @ObservedObject var state: ProviderState
+    /// 공급자 토글과 갱신 주기는 설정 창에 있다.
+    let openSettings: () -> Void
 
     @State private var now = Date()
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -34,8 +36,6 @@ struct PopoverView: View {
                 emptyState
             }
 
-            settings
-            ProviderToggleList(app: app)
             footer
         }
         .padding(14)
@@ -51,6 +51,14 @@ struct PopoverView: View {
                 .foregroundStyle(Theme.title)
 
             Spacer()
+
+            Button(action: openSettings) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .buttonStyle(.plain)
+            .help(state.strings("action.settings"))
+            .padding(.trailing, 4)
 
             // 연결 문제가 있을 때는 카드의 버튼 하나로 조치를 모은다.
             if state.connection == .connected {
@@ -149,28 +157,6 @@ struct PopoverView: View {
         .messageCard()
     }
 
-    private var settings: some View {
-        HStack {
-            Text(state.strings("settings.syncInterval"))
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.label)
-
-            Spacer()
-
-            Picker("", selection: $app.syncInterval) {
-                ForEach(SyncInterval.allCases, id: \.self) { interval in
-                    Text(state.strings(interval.labelKey)).tag(interval)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: 84)
-            .font(.system(size: 11))
-        }
-        .padding(.horizontal, 2)
-        .padding(.top, 2)
-    }
-
     private var footer: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 1) {
@@ -209,64 +195,6 @@ struct PopoverView: View {
             .foregroundStyle(Theme.muted)
         }
         .padding(.top, 2)
-    }
-}
-
-/// 공급자별 메뉴바 아이템 토글. 공급자 팝오버와 모두 꺼짐 팝오버가 함께 쓴다.
-struct ProviderToggleList: View {
-    @ObservedObject var app: AppState
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(app.strings("settings.providers"))
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.label)
-
-            ForEach(Provider.allCases, id: \.self) { provider in
-                Toggle(isOn: Binding(
-                    get: { app.toggles.isEnabled(provider) },
-                    set: { app.setEnabled(provider, $0) }
-                )) {
-                    Text(app.strings(provider.nameKey))
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.title)
-                }
-                .toggleStyle(.switch)
-                .controlSize(.mini)
-            }
-        }
-        .padding(.horizontal, 2)
-    }
-}
-
-/// 모든 공급자가 꺼졌을 때 앱 아이콘 아이템의 팝오버. 다시 켜거나 종료할 수 있어야 한다.
-struct SettingsPopoverView: View {
-    @ObservedObject var app: AppState
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.cardSpacing) {
-            Text(app.strings("settings.allOff"))
-                .font(.system(size: 12))
-                .foregroundStyle(Theme.label)
-                .fixedSize(horizontal: false, vertical: true)
-                .messageCard()
-
-            ProviderToggleList(app: app)
-
-            HStack {
-                Spacer()
-                Button(app.strings("action.quit")) {
-                    NSApplication.shared.terminate(nil)
-                }
-                .buttonStyle(.plain)
-                .font(.system(size: 10))
-                .foregroundStyle(Theme.muted)
-            }
-            .padding(.top, 2)
-        }
-        .padding(14)
-        .frame(width: Theme.popoverWidth)
-        .background(Theme.surface)
     }
 }
 

@@ -44,6 +44,8 @@
   "provider.codex.title": "Codex 사용량",
   "provider.codex.name": "Codex",
   "provider.codex.short": "Cx",
+  "settings.title": "설정",
+  "action.settings": "설정",
   "settings.providers": "메뉴바 항목",
   "settings.allOff": "모든 공급자가 꺼져 있습니다. 사용량을 보려면 하나 이상 켜세요.",
   "action.connect": "연결",

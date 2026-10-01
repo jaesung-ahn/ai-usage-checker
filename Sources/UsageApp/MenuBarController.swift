@@ -9,11 +9,13 @@ import UsageCore
 @MainActor
 final class MenuBarController {
     private let app: AppState
+    private let settings: SettingsWindowController
     private var items: [MenuBarEntry: StatusItemController] = [:]
     private var cancellable: AnyCancellable?
 
     init(app: AppState) {
         self.app = app
+        self.settings = SettingsWindowController(app: app)
         sync(app.toggles.menuBarEntries)
 
         cancellable = app.$toggles
@@ -33,6 +35,12 @@ final class MenuBarController {
         }
     }
 
+    /// 떠 있는 팝오버를 닫고 설정 창을 연다. 팝오버가 창을 가리지 않게 한다.
+    private func openSettings() {
+        items.values.forEach { $0.closePopover() }
+        settings.show()
+    }
+
     private func makeItem(for entry: MenuBarEntry) -> StatusItemController {
         switch entry {
         case .provider(let provider):
@@ -48,7 +56,11 @@ final class MenuBarController {
         let app = app
         return StatusItemController(
             autosaveName: Self.autosaveName(for: .provider(state.provider)),
-            content: PopoverView(app: app, state: state),
+            click: .popover(AnyView(PopoverView(
+                app: app,
+                state: state,
+                openSettings: { [weak self] in self?.openSettings() }
+            ))),
             redraw: state.$reading.map { _ in () }
                 .merge(with: state.$connection.map { _ in () })
                 .eraseToAnyPublisher(),
@@ -70,11 +82,12 @@ final class MenuBarController {
         )
     }
 
+    /// 모두 꺼졌을 때 남는 진입점. 팝오버 없이 설정 창을 연다.
     private func appIconItem() -> StatusItemController {
         let app = app
         return StatusItemController(
             autosaveName: Self.autosaveName(for: .appIcon),
-            content: SettingsPopoverView(app: app),
+            click: .action { [weak self] in self?.openSettings() },
             redraw: Empty().eraseToAnyPublisher(),
             render: { button in
                 let image = NSImage(systemSymbolName: "gauge.medium", accessibilityDescription: nil)
