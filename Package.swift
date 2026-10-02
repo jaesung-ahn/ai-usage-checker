@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "ClaudeUsageMonitor",
+    name: "AIUsageChecker",
     platforms: [.macOS(.v13)],
     targets: [
         .target(name: "UsageCore"),

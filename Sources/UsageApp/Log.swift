@@ -6,5 +6,5 @@ enum Log {
     static let network = Logger(subsystem: subsystem, category: "network")
     static let ui = Logger(subsystem: subsystem, category: "ui")
 
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "claude-usage-monitor"
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "ai-usage-checker"
 }

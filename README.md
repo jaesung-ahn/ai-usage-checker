@@ -1,4 +1,4 @@
-# Claude Usage Monitor
+# AI Usage Checker
 
 A macOS menu bar app that shows your Claude Code and Codex usage limits at a glance.
 
@@ -10,32 +10,54 @@ Each provider gets its own menu bar item. The 5-hour and 7-day limits apply inde
 hitting either one blocks you, so both are always visible.
 Click an item for details: per-model weekly pools or additional limits, and reset countdowns.
 
-Open Settings from the gear button in the popover to turn providers on and off and to set the
-sync interval. Only Claude is on by default. If you turn every provider off, a single app icon
+Open Settings from the gear button in the popover to turn providers on and off, set the
+sync interval, and launch the app at login. Only Claude is on by default. If you turn every provider off, a single app icon
 remains; clicking it opens Settings so you can turn one back on or quit.
 
 ## Requirements
 
-- macOS 13 or later
-- Xcode (the full app, not just the Command Line Tools). Tested with Xcode 27.0.
-  With only the Command Line Tools installed, `swift build` fails. After installing Xcode,
-  open it once to finish setup, and if `xcode-select -p` still points to `CommandLineTools`, run
-  `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`
+- macOS 13 or later, Apple Silicon or Intel
 - Claude Code, already logged in
 - For Codex: the Codex CLI, logged in with a ChatGPT account (`codex login`). API key login is not supported
 
 ## Install
 
+### Download
+
+1. Download the latest `AIUsageChecker-<version>.dmg` from
+   [Releases](https://github.com/jaesung-ahn/ai-usage-checker/releases)
+2. Open it and drag `AIUsageChecker` into `Applications`
+3. Open the app. macOS blocks it the first time, because the release is not signed with an
+   Apple Developer ID. Open System Settings → Privacy & Security, scroll down, and click
+   **Open Anyway** next to the message about AIUsageChecker. You only need to do this once per version
+
+If you prefer the terminal, `xattr -dr com.apple.quarantine /Applications/AIUsageChecker.app`
+does the same as step 3.
+
+The release is ad-hoc signed, so its signature changes with every version. After an update,
+macOS treats it as a new app: the Keychain asks for permission again (see [Claude](#claude)).
+
+### Build from source
+
+Building from source requires Xcode (the full app, not just the Command Line Tools).
+Tested with Xcode 27.0. With only the Command Line Tools installed, `swift build` fails.
+After installing Xcode, open it once to finish setup, and if `xcode-select -p` still points to
+`CommandLineTools`, run `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
+
 ```bash
-git clone https://github.com/jaesung-ahn/claude-usage-monitor.git
-cd claude-usage-monitor
+git clone https://github.com/jaesung-ahn/ai-usage-checker.git
+cd ai-usage-checker
 ./build.sh --install
 ```
 
-This builds the app, moves it to `/Applications`, and launches it.
-Omit `--install` to build into `./build.noindex` without installing.
+This builds the app, moves it to `/Applications`, and launches it. An app you build yourself
+is not blocked by Gatekeeper. Omit `--install` to build into `./build.noindex` without installing.
 
-No prebuilt release is available yet, so you have to build from source.
+### Upgrading from Claude Usage Monitor
+
+This app was called Claude Usage Monitor. The new name comes with a new bundle ID, so settings,
+menu bar positions and the Keychain permission start over. `./build.sh --install` removes
+`/Applications/ClaudeUsageMonitor.app`; if you install from the DMG, delete it yourself.
 
 ## Authentication
 
@@ -54,7 +76,7 @@ The app reuses the OAuth token that Claude Code already stores. It reads
   system dialog
 - **Disconnect.** Disconnect in the popover stops the app from reading the token, including on
   later launches. The Keychain permission itself stays. To remove it, open Keychain Access, find
-  `Claude Code-credentials`, and remove ClaudeUsageMonitor from its Access Control list
+  `Claude Code-credentials`, and remove AIUsageChecker from its Access Control list
 
 The token stays in memory. It is never logged, written to disk, or sent anywhere except
 `api.anthropic.com`.
@@ -106,6 +128,7 @@ The sync interval is configurable in Settings (1 minute to 1 hour, 5 minutes by 
 ```bash
 swift test      # 85 tests
 swift build
+./build.sh --dmg   # universal .app and a release disk image in ./build.noindex
 ```
 
 The package has two targets:
@@ -122,11 +145,10 @@ Display strings live in `locales/ko.json` rather than in code. Adding a language
 
 ## Status
 
-Working, but not yet packaged for distribution. Known gaps:
+Known gaps:
 
-- Apple Silicon only, no universal binary
-- Ad-hoc signed, so it will not run on another machine without building it there
-- No launch-at-login toggle, no auto-update
+- Ad-hoc signed, not notarized. Gatekeeper blocks the first launch of a downloaded release
+- No auto-update
 - Korean only
 
 Burn rate, reset-time projections, daily token trends and notifications are planned but not built.

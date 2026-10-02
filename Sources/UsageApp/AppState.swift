@@ -14,6 +14,7 @@ final class AppState: ObservableObject {
 
     let strings: Strings
     let thresholds: Thresholds
+    let launchAtLogin = LaunchAtLogin()
 
     private let providers: [Provider: ProviderState]
     private let defaults: UserDefaults

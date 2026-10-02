@@ -5,7 +5,7 @@
 # 토큰은 출력하지 않고 저장하지도 않는다. 저장되는 것은 응답 본문뿐이다.
 set -euo pipefail
 
-OUT="${1:-$HOME/.claude-usage-monitor/usage-response.json}"
+OUT="${1:-$HOME/.ai-usage-checker/usage-response.json}"
 mkdir -p "$(dirname "$OUT")"
 
 read_token() {

@@ -6,7 +6,7 @@
 # 응답에는 계정·사용자 식별자가 들어 있다. 픽스처로 옮기기 전에 지운다.
 set -euo pipefail
 
-OUT="${1:-$HOME/.claude-usage-monitor/codex-usage-response.json}"
+OUT="${1:-$HOME/.ai-usage-checker/codex-usage-response.json}"
 mkdir -p "$(dirname "$OUT")"
 
 AUTH="$HOME/.codex/auth.json"

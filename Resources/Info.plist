@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ko</string>
 	<key>CFBundleDisplayName</key>
-	<string>Claude Usage Monitor</string>
+	<string>AI Usage Checker</string>
 	<key>CFBundleExecutable</key>
-	<string>ClaudeUsageMonitor</string>
+	<string>AIUsageChecker</string>
 	<key>CFBundleIdentifier</key>
-	<string>dev.jaesungahn.ClaudeUsageMonitor</string>
+	<string>dev.jaesungahn.AIUsageChecker</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Claude Usage Monitor</string>
+	<string>AI Usage Checker</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

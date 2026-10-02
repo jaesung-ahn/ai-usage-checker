@@ -101,11 +101,10 @@ final class MenuBarController {
         )
     }
 
-    /// Claude 아이템은 공급자를 추가하기 전의 이름을 그대로 쓴다. 바꾸면 사용자가 옮겨둔 위치가 풀린다.
+    /// 바꾸면 사용자가 옮겨둔 위치가 풀린다. 번들 ID를 바꿀 때 함께 정했다.
     private static func autosaveName(for entry: MenuBarEntry) -> String {
-        let base = "ClaudeUsageMonitorStatusItem"
+        let base = "AIUsageCheckerStatusItem"
         switch entry {
-        case .provider(.claude): return base
         case .provider(let provider): return "\(base).\(provider.rawValue)"
         case .appIcon: return "\(base).appIcon"
         }
