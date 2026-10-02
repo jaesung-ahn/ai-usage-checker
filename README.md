@@ -8,10 +8,11 @@ C 5h 15% · 7d 21%    Cx 5h 2% · 7d 0%
 
 Each provider gets its own menu bar item. The 5-hour and 7-day limits apply independently —
 hitting either one blocks you, so both are always visible.
-Click an item for details: per-model weekly pools or additional limits, reset countdowns, and the sync interval.
+Click an item for details: per-model weekly pools or additional limits, and reset countdowns.
 
-Turn providers on and off under "메뉴바 항목" in the popover. Only Claude is on by default.
-If you turn every provider off, a single app icon remains so you can turn one back on or quit.
+Open Settings from the gear button in the popover to turn providers on and off and to set the
+sync interval. Only Claude is on by default. If you turn every provider off, a single app icon
+remains; clicking it opens Settings so you can turn one back on or quit.
 
 ## Requirements
 
@@ -98,7 +99,7 @@ separately for each provider, so a 429 from one does not block the other:
 - On HTTP 429 it backs off exponentially, honoring `Retry-After` when the server sends it
 - A successful request clears the backoff
 
-The sync interval is configurable from the popover (1 minute to 1 hour, 5 minutes by default) and shared by all providers.
+The sync interval is configurable in Settings (1 minute to 1 hour, 5 minutes by default) and shared by all providers.
 
 ## Development
 
